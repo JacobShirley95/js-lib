@@ -2,7 +2,7 @@ module.exports = class Locking
 	lock: false
 	buffer: []
 
-	constructor: () ->
+	constructor: ->
 
 	queue: (func) ->
 		if (@lock)
@@ -10,15 +10,14 @@ module.exports = class Locking
 		else
 			@lock = true
 			if (@buffer.length > 0)
+				@buffer.push(func)
+				
 				func = @buffer[0]
 				@buffer.splice(0, 1)
 
-				func()
-			else
-				func()
+			func()
 
 	next: ->
 		@lock = false
-
 		if (@buffer.length > 0)
 			@queue()

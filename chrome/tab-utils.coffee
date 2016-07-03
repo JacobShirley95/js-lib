@@ -2,9 +2,9 @@ $ = require("jQuery")
 TabMessaging = require("../chrome/messaging.coffee").TabMessaging
 Locking = require("../core/locking.coffee")
 CoffeeScript = require("coffee-script")
+fs = require("fs")
 
 loadResource = (file, async, callback) ->
-	console.log("Being called")
 	r = ""
 	$.ajax({
 		url: chrome.extension.getURL(file)
@@ -20,7 +20,7 @@ loadResource = (file, async, callback) ->
 	return r
 
 module.exports = class TabUtils
-	@_messagingCode: CoffeeScript.compile(require('fs').readFileSync(__dirname+"/messaging.coffee", 'utf-8'))
+	@_messagingCode: CoffeeScript.compile(fs.readFileSync(__dirname+"/messaging.coffee", "utf-8"))
 	@_captureTabLocking: new Locking()
 
 	constructor: ->
@@ -55,7 +55,7 @@ module.exports = class TabUtils
 			if (tabId == -1) 
 				run()
 			else
-				chrome.tabs.update(tabId, {highlighted:true}, run)
+				TabUtils.selectTab(tabId, run)
 		)
 
 	@setLoadTimeout: (id, onloaded, timeout, onerror) ->
@@ -63,32 +63,32 @@ module.exports = class TabUtils
 		called = false
 
 		onUpdated = (tabId, details) ->
-						if (details.status == "complete" && tabId == id && !called)
-							if (timer != -1)
-								clearTimeout(timer)
+			if (details.status == "complete" && tabId == id && !called)
+				if (timer != -1)
+					clearTimeout(timer)
 
-							onloaded(tabId, details)
-							called = true
+				onloaded(tabId, details)
+				called = true
 
-							if (onloaded)
-								chrome.tabs.onUpdated.removeListener(onUpdated)
+				if (onloaded)
+					chrome.tabs.onUpdated.removeListener(onUpdated)
 
-							if (onerror)
-								chrome.webNavigation.onErrorOccurred.removeListener(onError)
+				if (onerror)
+					chrome.webNavigation.onErrorOccurred.removeListener(onError)
 							
 		onError = (details) ->
-					if (details.tabId == id && !called)
-						if (timer != -1)
-							clearTimeout(timer)
+			if (details.tabId == id && !called)
+				if (timer != -1)
+					clearTimeout(timer)
 
-						onerror(details)
-						called = true
+				onerror(details)
+				called = true
 
-						if (onloaded)
-							chrome.tabs.onUpdated.removeListener(onUpdated)
+				if (onloaded)
+					chrome.tabs.onUpdated.removeListener(onUpdated)
 
-						if (onerror)
-							chrome.webNavigation.onErrorOccurred.removeListener(onError)
+				if (onerror)
+					chrome.webNavigation.onErrorOccurred.removeListener(onError)
 
 		if (onloaded) 
 			if (typeof timeout != "undefined") 
@@ -142,7 +142,7 @@ module.exports = class TabUtils
 					newCode += "var EXT_VARS = "+JSON.stringify(options.vars)+";"
 					delete options.vars
 
-				code = TabUtils._messagingCode + code.substring(0, pos) + newCode + code.substring(pos, code.length);
+				code = TabUtils._messagingCode + code.substring(0, pos) + newCode + code.substring(pos, code.length)
 
 			return code
 
