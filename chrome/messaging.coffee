@@ -1,5 +1,6 @@
 module.exports.ChromeMessaging = class ChromeMessaging
 	@_listeners: []
+	@_started: false
 
 	@send: (messageId, data, tabId) ->
 		if (typeof tabId != 'undefined')
@@ -11,19 +12,22 @@ module.exports.ChromeMessaging = class ChromeMessaging
 		ChromeMessaging._listeners.push({id: messageId, callback: callback})
 
 	@start: ->
-		chrome.runtime.onMessage.addListener((data, sender, sendResponse) ->
-			for listener in ChromeMessaging._listeners
-				if (listener.id == data.messageId)
-					listener.callback(data.data)
-		)
+		if (!ChromeMessaging._started)
+			ChromeMessaging._started = true
+			chrome.runtime.onMessage.addListener((data, sender, sendResponse) ->
+				for listener in ChromeMessaging._listeners
+					if (listener.id == data.messageId)
+						listener.callback(data.data)
+			)
 
 module.exports.TabMessaging = class TabMessaging
 	_listeners: []
 	_connected: false
 
 	constructor: (@id, @type) ->
+		ChromeMessaging.start()
 		ChromeMessaging.listen("TAB-"+@id, (data) =>
-			if (!@_connected)
+			if (!@isConnected())
 				if (data.extConnected)
 					@_connected = true
 			else
@@ -35,6 +39,9 @@ module.exports.TabMessaging = class TabMessaging
 			@send({extConnected: true})
 
 	send: (data) ->
+		###if (!@isConnected())
+			throw new Error("TabMessaging: Not connected to tab "+@id+".")
+		###
 		if (@type == "background")
 			ChromeMessaging.send("TAB-"+@id, data, @id)
 		else

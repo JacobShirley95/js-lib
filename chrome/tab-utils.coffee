@@ -20,7 +20,7 @@ loadResource = (file, async, callback) ->
 	return r
 
 module.exports = class TabUtils
-	@_messagingCode: CoffeeScript.compile(fs.readFileSync(__dirname+"/messaging.coffee", "utf-8"))
+	@_messagingCode: CoffeeScript.compile(fs.readFileSync(__dirname+"/messaging.coffee", "utf-8"), {bare: true})
 	@_captureTabLocking: new Locking()
 
 	constructor: ->
@@ -142,7 +142,7 @@ module.exports = class TabUtils
 					newCode += "var EXT_VARS = "+JSON.stringify(options.vars)+";"
 					delete options.vars
 
-				code = TabUtils._messagingCode + code.substring(0, pos) + newCode + code.substring(pos, code.length)
+				code = "var module = {exports: {ChromeMessaging: null, TabMessaging: null}};"+TabUtils._messagingCode + code.substring(0, pos) + newCode + code.substring(pos, code.length)
 
 			return code
 
