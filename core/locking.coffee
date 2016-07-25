@@ -10,10 +10,11 @@ module.exports = class Locking
 		else
 			@lock = true
 			if (@buffer.length > 0)
-				@buffer.push(func)
-				
 				func = @buffer[0]
+				
 				@buffer.splice(0, 1)
+			else
+				@buffer.push(func)
 
 			func()
 
